@@ -1,0 +1,9 @@
+.error {
+  font-size: 24px;
+}
+
+.error__name {
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #3f51b5;
+}
