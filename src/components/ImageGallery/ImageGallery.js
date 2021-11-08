@@ -8,55 +8,76 @@ import PendingLoader from '../Loader/Loader';
 import Error from '../Error/Error';
 import Modal from '../Modal/Modal';
 
-function ImageGallery({ name }) {
+function ImageGallery({name}) {
     const [images, setImages] = useState([]);
     const [page, setPage] = useState(1);
+    const [status, setStatus] = useState('idle');    
     const [error, setError] = useState(null);
-    const [status, setStatus] = useState('idle');
     const [showModal, setShowModal] = useState(false);
     const [imageIndex, setImageIndex] = useState(null);
 
+
     useEffect(() => {
-        if (!name) {
-            return
+        if(name === '') {
+            return;
         }
 
         setStatus('pending');
 
-        API.fetchImage({ name, page })
-            .then(images => {
-                setPage(prevName => prevName !== name ? setPage(1) : setPage(page))
-                setImages(prevImages => [...prevImages, ...images.hits]);
-                setStatus('resolved');
-            })
-            .catch(error => {
-                setError(error.message);
-                setStatus('rejected');
-            });
-    }, [name, page]);
+        API.fetchImage(name)
+        .then(images => {  
+            setPage(1);          
+            setImages(images.hits);            
+            setStatus('resolved');               
+        })
+        .catch(error => {
+            setPage(1);
+            setImages([]);
+            setError(error.message);            
+            setStatus('rejected');
+        });
+    }, [name]);
 
-    const openModal = (e) => {
-        setImageIndex(e.target.getAttribute('data-index'));
-        setShowModal(true);
-    };
+    function openModal(e) {
+    setImageIndex(e.target.getAttribute('data-index'));
+    setShowModal(true);
+}
 
-    const closeModal = () => {
+    const closeModal = () => {  
         setShowModal(false);
         setImageIndex(null);
     }
 
     const loadMore = () => {
-        setPage(page => page + 1);
+        setPage(prevPage => prevPage + 1);
+
+        const fetchImages = () => {
+            setStatus('pending');
+
+            API.fetchImage(name, page)
+            .then(images => {
+                setImages(prevImages => [...prevImages, ...images.hits]);
+                setStatus('resolved');
+            })
+            .catch(error => {
+                setPage(1);
+                setImages([]);
+                setError(error.message);                
+                setStatus('rejected');
+            });
+        };
+
+        fetchImages();
         scroll();
     }
 
     const scroll = () => {
         setTimeout(() => {
             window.scrollTo({
-                top: document.documentElement.scrollHeight,
-                behavior: 'smooth',
+              top: document.documentElement.scrollHeight,
+              behavior: 'smooth',
             });
-        }, 1000);
+          }, 1000);
     }
 
     if (status === 'idle') {
@@ -74,17 +95,17 @@ function ImageGallery({ name }) {
     if (status === 'resolved') {
         return (
             <>
-                <ul className={s.imageGallery} onClick={openModal}>
-                    {images.map(
-                        ({ id, webformatURL, tags }, index) =>
-                            <ImageGalleryItem key={id} webformatURL={webformatURL} tags={tags} index={index} />
-                    )}
-                </ul>
-                <Button onLoadMore={loadMore} />
+            <ul className={s.imageGallery} onClick={openModal}>
+                {images.map(
+                    ({ id, webformatURL, tags}, index) => 
+                    <ImageGalleryItem key={id} webformatURL={webformatURL} tags={tags} index={index}/>
+                )}                       
+            </ul>
+                <Button onLoadMore={loadMore}/>
                 {showModal && (<Modal image={images[imageIndex]} onClose={closeModal} />)}
             </>
         );
-    }
+    }    
 }
 
 ImageGallery.propTypes = {

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import {ReactComponent as Icon} from '../../icons/search.svg';
 
 function Searchbar({onSubmit}) {
-    const [imageName, setImageName] = useState('');    
+    const [imageName, setImageName] = useState('');
 
     const handleChange = (e) => {
         setImageName(e.currentTarget.value);
